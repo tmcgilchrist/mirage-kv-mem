@@ -53,7 +53,7 @@ let key_of_str = Mirage_kv.Key.v
 
 let key_a = key_of_str "a"
 
-let map = add key_a bc empty_m
+let map_pure = add key_a bc empty_m
 
 let empty () =
   let expected = empty_m in
@@ -61,24 +61,24 @@ let empty () =
 
 let read () =
   let expected = Ok bc in
-  Alcotest.check compare_read_res "hello" expected (Pure.get map key_a)
+  Alcotest.check compare_read_res "hello" expected (Pure.get map_pure key_a)
 
 let read_partial () =
   Alcotest.check compare_read_res "hello" (Ok "bc")
-    (Pure.get_partial map key_a ~offset:(Optint.Int63.of_int 0) ~length:2);
+    (Pure.get_partial map_pure key_a ~offset:(Optint.Int63.of_int 0) ~length:2);
   Alcotest.check compare_read_res "hello" (Ok "c")
-    (Pure.get_partial map key_a ~offset:(Optint.Int63.of_int 1) ~length:1);
+    (Pure.get_partial map_pure key_a ~offset:(Optint.Int63.of_int 1) ~length:1);
   Alcotest.check compare_read_res "hello" (Ok "b")
-    (Pure.get_partial map key_a ~offset:(Optint.Int63.of_int 0) ~length:1);
+    (Pure.get_partial map_pure key_a ~offset:(Optint.Int63.of_int 0) ~length:1);
   Alcotest.check compare_read_res "hello" (Ok "")
-    (Pure.get_partial map key_a ~offset:(Optint.Int63.of_int 3) ~length:1);
+    (Pure.get_partial map_pure key_a ~offset:(Optint.Int63.of_int 3) ~length:1);
   Alcotest.check compare_read_res "hello" (Ok "c")
-    (Pure.get_partial map key_a ~offset:(Optint.Int63.of_int 1) ~length:4)
+    (Pure.get_partial map_pure key_a ~offset:(Optint.Int63.of_int 1) ~length:4)
 
 let destroy () =
   let expected = empty_m in
   Alcotest.check compare_write_res "hello" (Ok expected)
-    (Pure.remove map key_a now)
+    (Pure.remove map_pure key_a now)
 
 type node = [ `Value | `Dictionary ]
 
@@ -91,7 +91,7 @@ let equal_node a b = match a, b with
   | _ -> false
 
 let list () =
-  let map_of_three = add (key_of_str "b") "" (add (key_of_str "c") "" map) in
+  let map_of_three = add (key_of_str "b") "" (add (key_of_str "c") "" map_pure) in
   let expected = Ok [ (key_of_str "a", `Value) ; (key_of_str "b", `Value) ; (key_of_str "c", `Value) ] in
   Alcotest.check
     Alcotest.(result (slist (pair key_test (testable pp_node equal_node)) compare) e)
@@ -129,7 +129,7 @@ let write_multiple () =
 
 let size () =
   Alcotest.(check (result int63_test e) __LOC__ (Ok (Optint.Int63.of_int 2))
-              (Pure.size map key_a))
+              (Pure.size map_pure key_a))
 
 let rename () =
   let expected = Ok (add key_a bc empty_m) in
