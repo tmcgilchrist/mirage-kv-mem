@@ -1,8 +1,11 @@
 name: build
 
 on:
-  pull_request:
   push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
   schedule:
     # Prime the caches every Monday
     - cron: 0 1 * * MON
@@ -16,20 +19,13 @@ jobs:
           - ubuntu-latest
         packages:
           - "."
-        runtest:
-          - true
         ocaml-compiler:
-          - "5.x"
+          - "5.3"
           - "4.14"
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Set git to use LF
-        run: |
-          git config --global core.autocrlf false
-          git config --global core.eol lf
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -37,8 +33,19 @@ jobs:
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
-          opam-local-packages: ${{ matrix.opam-local-packages }}
 
-      - run: opam install ${{ matrix.packages }} --with-test --deps-only
-      - if: ${{ matrix.runtest }}
-        run: opam exec -- dune build @install @check @runtest
+      - name: Install dependencies
+        run: |
+          opam install ${{matrix.packages}} --with-test --deps-only
+
+      - name: Build
+        run: |
+          opam exec -- dune build @all
+
+      - name: Tests
+        run: |
+          opam exec -- dune build @runtest
+
+      - name: Opam Lint
+        run: |
+          opam lint mirage-kv-mem.opam
